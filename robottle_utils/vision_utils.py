@@ -33,6 +33,7 @@ def gstreamer_pipeline(
 def take_picture(save = False, name = ""):
     """Takes a picture with the CSI-camera and returns it"""
     cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+    # cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_V4L)
     ret, frame = cap.read()
     cap.release()
     if save:
