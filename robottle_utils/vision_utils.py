@@ -1,3 +1,4 @@
+import os
 import cv2
 
 # private function to have access to the streaming
@@ -36,6 +37,8 @@ def take_picture(save = False, name = ""):
     cap.release()
     if save:
         # save the picture here 
-        folder = "~/dev/ros/pictures/f1/"
-        cv2.imwrite(folder + name + "png", frame)
+        folder = "/home/arthur/dev/ros/pictures/f1/"
+        file_name = os.path.join(folder, name + '.jpg')
+        print("Going to save at : ", file_name)
+        print(cv2.imwrite(file_name ,frame))
     return frame
