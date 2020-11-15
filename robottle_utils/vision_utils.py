@@ -29,9 +29,13 @@ def gstreamer_pipeline(
     )
 
 
-def take_picture():
+def take_picture(save = False, name = ""):
     """Takes a picture with the CSI-camera and returns it"""
     cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
     ret, frame = cap.read()
     cap.release()
+    if save:
+        # save the picture here 
+        folder = "~/dev/ros/pictures/f1/"
+        cv2.imwrite(folder + name + "png", frame)
     return frame
