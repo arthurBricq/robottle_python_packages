@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import sys
+%matplotlib qt
+
+from robottle_utils import map_utils
+
 
 # what goes on in this file ? 
 # the goal of map analysis is to extract points on the SLAM map that corresponds to 
@@ -9,6 +14,7 @@ import time
 # To do so, we must find the corners
 
 def plot_image(img):
+    plt.figure()
     plt.imshow(img, cmap = "binary")
     plt.show()
 
@@ -18,42 +24,26 @@ occupancy = np.load("/home/arthur/dev/ros/data/maps/mercantour1240.npy")
 plot_image(occupancy)
 
 
+#%% find zones at the begining from the robot
 
+robot_position = np.array([250, 300])
 
-#%% Feature extration 1: all in one cell 
+# 1. find the 4 corners of the map (outer corners)
+corners = map_utils.get_bounding_rect(occupancy) 
 
+# 2. find closest and the further away from robot
+# i stands for 'index'
+distances = ((corners - robot_position) * (corners - robot_position)).sum(axis = 1)
+i_r, i_p4 = distances.argmin(), distances.argmax()
+r, p4  = corners[i_r], corners[i_p4]
 
-threshold = 90 # threshold for binary image 
-kernel_size = 5 # median filter kernel size
-N_points_min = 30 # number of points inside a contour to keep it 
+# 3. use sign of the cross product to find which are zone 2 and zone 3
+diag = p4 - r 
+cross_products = np.cross(diag, corners - r)
+i_p2, i_p3 = cross_products.argmin(), cross_products.argmax() 
+p2, p3 = corners[i_p2], corners[i_p3]
 
-start = time.time()
-
-
-binary = np.uint8(occupancy > threshold)
-binary = cv2.medianBlur(binary, ksize = kernel_size)
-rgb_img = cv2.cvtColor(binary*255, cv2.COLOR_GRAY2RGB)
-
-cntrs, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-contours = [c for c in cntrs if len(c) > N_points_min]
-contour = np.concatenate(contours).reshape(-1,2)
-rot_rect = cv2.minAreaRect(contour)
-
-end = time.time()
-print("Elasped: ", end - start)
-
-
-# plotting happens here
-
-cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
-box = np.int0(cv2.boxPoints(rot_rect)) # cv2.boxPoints(rect) for OpenCV 3.x
-cv2.drawContours(rgb_img,[box],0,(0,0,255),2)
-plt.imshow(rgb_img)
-
-
-
-
-
+(r, p2, p3, p4)
 
 #%% threshold to get binary image
 
@@ -82,8 +72,7 @@ rot_rect = cv2.minAreaRect(contour)
 box = cv2.boxPoints(rot_rect) # cv2.boxPoints(rect) for OpenCV 3.x
 box = np.int0(box)
 cv2.drawContours(rgb_img,[box],0,(0,0,255),2)
-plt.imshow(rgb_img)
-
+plot_image(rgb_img)
 
 
 
@@ -122,7 +111,7 @@ plt.ylim(0, 500)
 #%% py shi tomasi corner detection (not working)
 
 img = occupancy
-rgb_img = cv2.cvtColor(binary, cv2.GRAY2RGB)
+rgb_img = cv2.cvtColor(binary, cv2.COLOR_GRAY2RGB)
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 corners = cv2.goodFeaturesToTrack(img,25,0.01,10)
 corners = np.int0(corners)

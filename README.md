@@ -17,9 +17,4 @@ We keep the ROS code to do the administratif work, and the python package will d
 
 ### Install
 
-Run the line `sudo python3 setup.py install` (sudo is important, ROS uses super user python version, not any other one...)
-
-
-
-
-
+Run the line `sudo python3 setup.py install` (sudo is important, ROS uses super user python version, not any other one...
