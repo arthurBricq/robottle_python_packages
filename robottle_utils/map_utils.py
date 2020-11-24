@@ -2,6 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
+
+def pos_to_gridpos(x, y, N_pixs = 500, L = 10):
+    """Retuns the given position in meters to a grid position as a numpy array. 
+    N_pixs is the number of pixels per side, and L is the actual lenght of 1 side.
+    All values are returned as int (theta is in rad)
+    The function assumes that the map is a square
+    """
+    return np.array([N_pixs * x / L, N_pixs * y / L]).astype(int)
+
 def get_map(map_as_array, n_w = 500, n_h = 500):
     """
     Returns the map as a 2D occupancy grid (numpy) from the long format of the map.
@@ -13,21 +22,24 @@ def plot_map(occupancy_grid):
     plt.imshow(occupancy_grid, cmap="binary")
 
 
-def make_nice_plot(binary_grid, save_name, robot_pos = [], contours = [], corners = [], zones = []):
+def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = []):
     """Make a nice plot, depending on the given parameters
     and saves it at the desired destination
 
     Parameters
     binary_grid: binary map of the world
     save_name: where to save the img
-    robot_pos: position of the robot (x,y,theta)
+    robot_pos: position of the robot (x,y)
+    theta: orientation of the robot [deg]
     contours: detected contours around obstacles
     corners: 4 corners of the bounding oriented rectangle
     """
     # create RGB image (we do want some color here !)
     rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
     if len(robot_pos):
+        print("Robot position : ", robot_pos)
         cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+        theta = np.deg2rad(theta)
         pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
         cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
     if len(contours):
