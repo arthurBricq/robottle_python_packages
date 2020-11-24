@@ -7,7 +7,6 @@ import sys
 
 from robottle_utils import map_utils
 
-
 # what goes on in this file ? 
 # the goal of map analysis is to extract points on the SLAM map that corresponds to 
 # real points in the map (the center of each zones)
@@ -21,9 +20,40 @@ def plot_image(img):
 #%% Read one of the map that was saved from ROS
 
 occupancy = np.load("/home/arthur/dev/ros/data/maps/mercantour1240.npy")
-plot_image(occupancy)
+# plot_image(occupancy)
+
+robot_pos = np.array([150, 350, 1])
+
+# obtain data from image processing
+binary_grid = map_utils.filter_map(occupancy)
+corners, contours  = map_utils.get_bounding_rect(binary_grid) 
+zones = map_utils.get_zones(corners, robot_pos[:2])
+
+# make a nice plot with all this (code for the plotting function)
+rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
+# contours
+cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
+# rectangle around them
+cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
+# position of the robot
+cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
+cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
+# position of the 4 zones
+colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
+for i, z in enumerate(zones):
+    cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
 
 
+plt.imshow(rgb_img)
+plt.show()
+
+
+
+
+
+
+####################
 #%% find zones at the begining from the robot
 
 robot_position = np.array([250, 300])
@@ -45,6 +75,7 @@ p2, p3 = corners[i_p2], corners[i_p3]
 
 (r, p2, p3, p4)
 
+#######################
 #%% threshold to get binary image
 
 # according to 'cv2.findcontours' we want to have zero = 

@@ -12,15 +12,10 @@ def plot_map(occupancy_grid):
     """Plot the map in the current matplotlib.pyplot.figure"""
     plt.imshow(occupancy_grid, cmap="binary")
 
-def filter_map(occupancy_grid):
-    """
-    From the initial occupancy_grid (straight out of the SLAM) returns a new and cleaner version of it.
-    """
-    # TODO: mabye it is not necessary to do so, really depends on testing. 
-    return 0
 
-def make_nice_plot(binary_grid, save_name, robot_pos = None, contours = None, corners = [], zones = []):
+def make_nice_plot(binary_grid, save_name, robot_pos = [], contours = [], corners = [], zones = []):
     """Make a nice plot, depending on the given parameters
+    and saves it at the desired destination
 
     Parameters
     binary_grid: binary map of the world
@@ -31,42 +26,58 @@ def make_nice_plot(binary_grid, save_name, robot_pos = None, contours = None, co
     """
     # create RGB image (we do want some color here !)
     rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
-    if contours:
+    if len(robot_pos):
+        cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+        pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
+        cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
+    if len(contours):
         cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
     if len(corners):
         cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
+    if len(zones):
+        colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
+        for i, z in enumerate(zones):
+            cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
+
     # save the image
     cv2.imwrite(save_name, rgb_img)
 
-def get_bounding_rect(occupancy, threshold = 90, kernel_size = 5, N_points_min = 30, save_name = None):
+def filter_map(occupancy, threshold = 90, kernel_size = 5):
+    """From the initial occupancy_grid (straight out of the SLAM) returns a new and cleaner version of it.
+
+    Parameters
+    occupancy ([[int]]): occupancy grid given by SLAM as numpy array
+    threshold (int): binary threshold to discriminate obstacles from free space
+    kernel_size (int): kernel size to use for median filter.
+    """
+    binary = np.uint8(occupancy > threshold)
+    binary = cv2.medianBlur(binary, ksize = kernel_size)
+    return binary
+
+def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
     """Returns an oriented rectangle (x,y,w,h) which surrounds the map.
 
     Parameters
-    occupancy ([[int]]): occupancy grid of the map
-    threshold (int): binary threshold to discriminate obstacles from free space
+    binary ([[int]]): occupancy grid of the map as a binary map with only obstacles
     N_points_min (int): min number of points to keep a contour (will remove very small contours)
     save_name (string): name to save the figure at (if None provided, will not save)
 
     Returns
     rot_ret (x,y,w,h): the rectable that goes around the map
     """
-    binary = np.uint8(occupancy > threshold)
-    binary = cv2.medianBlur(binary, ksize = kernel_size)
-
-    cntrs, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # find contours and only keep important ones
+    cntrs, hierarchy = cv2.findContours(binary_grid, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = [c for c in cntrs if len(c) > N_points_min]
     if len(contours):
+        # create an array of all the points in all contours
         contour = np.concatenate(contours).reshape(-1,2)
+        # find a rotated rectangle around those points
         rot_rect = cv2.minAreaRect(contour)
-        box = np.int0(cv2.boxPoints(rot_rect)) # cv2.boxPoints(rect) for OpenCV 3.x
+        corners = np.int0(cv2.boxPoints(rot_rect)) # cv2.boxPoints(rect) for OpenCV 3.x
         if save_name:
             # let's save the picture somewhere
-            make_nice_plot(binary, save_name, corners = box, contours = contours)
-            # rgb_img = cv2.cvtColor(binary*255, cv2.COLOR_GRAY2RGB)
-            # cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
-            # cv2.drawContours(rgb_img,[box],0,(0,0,255),2)
-            # cv2.imwrite(save_name, rgb_img)
-        return box
+            make_nice_plot(binary_grid, save_name, corners = corners, contours = contours)
+        return corners, contours
 
 def get_zones(corners, robot_position):
     """Returns the outermost position of the zones (recyling, zone2, zone3, zone4)
@@ -87,7 +98,7 @@ def get_zones(corners, robot_position):
     # 2. use sign of the cross product to find which are zone 2 and zone 3
     diag = p4 - r
     cross_products = np.cross(diag, corners - r)
-    i_p2, i_p3 = cross_products.argmin(), cross_products.argmax()
+    i_p3, i_p2 = cross_products.argmin(), cross_products.argmax()
     p2, p3 = corners[i_p2], corners[i_p3]
 
     return (r, p2, p3, p4)
