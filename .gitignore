@@ -2,3 +2,7 @@
 *~
 *.swp
 *un~
+*.egg_info
+__pycache__/
+build/
+dist/
