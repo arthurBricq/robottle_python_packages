@@ -120,6 +120,9 @@ def get_initial_zones(corners, robot_position):
 
     return (r, p2, p3, p4)
 
+def get_zones_from_previous(corners, previous_zones):
+    print("TOD")
+
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
     Returns True if there is an obstacle in the line in front of the robot, of
