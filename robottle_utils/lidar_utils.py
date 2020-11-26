@@ -15,7 +15,7 @@ def get_valid_lidar_range(distances, angles, threshold = 600, n_points = 6):
     # find the first index
     number_of_valid_points = 0
     for i, distance in enumerate(distances):
-        if distance > threshold:
+        if distance < threshold:
             number_of_valid_points += 1 
         if number_of_valid_points >= n_points:
             break 
@@ -24,7 +24,7 @@ def get_valid_lidar_range(distances, angles, threshold = 600, n_points = 6):
     # find the last index 
     number_of_valid_points = 0
     for i, distance in enumerate(distances[-1::-1]):
-        if distance > threshold:
+        if distance < threshold:
             number_of_valid_points += 1 
         if number_of_valid_points >= n_points:
             break 

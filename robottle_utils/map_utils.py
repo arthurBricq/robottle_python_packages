@@ -75,7 +75,9 @@ def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
     save_name (string): name to save the figure at (if None provided, will not save)
 
     Returns
-    rot_ret (x,y,w,h): the rectable that goes around the map
+    corners (p1,p2,p3,p4): the 4 corners of the rectangles
+    area (int): number of pixels inside the rectangle (used to select valid rectangle)
+    contours ([[points]]): all the detected contours (used for plotting)
     """
     # find contours and only keep important ones
     cntrs, hierarchy = cv2.findContours(binary_grid, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -85,13 +87,16 @@ def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
         contour = np.concatenate(contours).reshape(-1,2)
         # find a rotated rectangle around those points
         rot_rect = cv2.minAreaRect(contour)
+        area = rot_rect[1][0] *  rot_rect[1][1] # rot_rect[1] = size = [w,h]
         corners = np.int0(cv2.boxPoints(rot_rect)) # cv2.boxPoints(rect) for OpenCV 3.x
         if save_name:
             # let's save the picture somewhere
             make_nice_plot(binary_grid, save_name, corners = corners, contours = contours)
-        return corners, contours
+        return corners, area, contours
+    else:
+        return None
 
-def get_zones(corners, robot_position):
+def get_initial_zones(corners, robot_position):
     """Returns the outermost position of the zones (recyling, zone2, zone3, zone4)
     given the initial corners of the map and the initial robot position. 
 
