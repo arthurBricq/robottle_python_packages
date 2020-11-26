@@ -104,6 +104,9 @@ def get_initial_zones(corners, robot_position):
     - the closest point of the robot is the recycling area
     - the further away is the zone 4 (the ramp) 
     - the zones 2 and 3 are at the right and at the left of the map
+
+    Returns
+    zones (recycling, z2, z3, z4)
     """
     # 1. find points closest and the further away from robot
     # this gives recycling area and the ramp zone
@@ -121,7 +124,18 @@ def get_initial_zones(corners, robot_position):
     return (r, p2, p3, p4)
 
 def get_zones_from_previous(corners, previous_zones):
-    pass
+    """Given the 4 corners found and the previous zones detected (assuming that those
+    are the correct ones) it will order the new zones so that closest points are in the 
+    same position.
+
+    Returns
+    zones (recycling, z2, z3, z4)
+    """
+    new_zones = np.array(corners)
+    previous_zones = np.array(previous_zones)
+    X = previous_zones.reshape(1, 4, 2) - new_zones.reshape(4, 1, 2)
+    idcs = (X * X).sum(axis=2).argmin(axis = 0)
+    return new_zones[idcs]
 
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
