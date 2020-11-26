@@ -121,7 +121,7 @@ def get_initial_zones(corners, robot_position):
     return (r, p2, p3, p4)
 
 def get_zones_from_previous(corners, previous_zones):
-    print("TOD")
+    pass
 
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
