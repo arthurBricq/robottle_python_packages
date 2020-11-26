@@ -17,17 +17,34 @@ def plot_image(img):
     plt.imshow(img, cmap = "binary")
     plt.show()
 
-#%% Read one of the map that was saved from ROS
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/mercantour1240.npy")
+################################
+#%% Find zones AFTER initial zones were found
+
+# zones = (recycling, z2, z3, z4)
+
+previous_zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+new_zones = np.array(([ 73, 255], [388, 223], [55, 46], [370,  34]))
+np.random.shuffle(new_zones)
+
+X = previous_zones.reshape(1, 4, 2) - new_zones.reshape(4, 1, 2)
+idcs = (X * X).sum(axis=2).argmin(axis = 0)
+
+
+
+
+###################################
+#%% Make a nice plot with all the given information
+
+occupancy = np.load("/home/arthur/dev/ros/data/maps/lore_1.npy")
 # plot_image(occupancy)
 
 robot_pos = np.array([150, 350, 1])
 
 # obtain data from image processing
 binary_grid = map_utils.filter_map(occupancy)
-corners, contours  = map_utils.get_bounding_rect(binary_grid) 
-zones = map_utils.get_zones(corners, robot_pos[:2])
+corners, area, contours  = map_utils.get_bounding_rect(binary_grid) 
+zones = map_utils.get_initial_zones(corners, robot_pos[:2])
 
 # make a nice plot with all this (code for the plotting function)
 rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
@@ -37,6 +54,7 @@ cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
 cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
 # position of the robot
 cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+theta = robot_pos[2]
 pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
 cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
 # position of the 4 zones
