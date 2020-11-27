@@ -18,6 +18,58 @@ def plot_image(img):
     plt.show()
 
 
+
+################################
+#%% Find neighboords of each point
+
+zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+
+# for each point, find its neighors (can be done only one)
+X = np.linalg.norm(zones.reshape(1,4,2) - zones.reshape(4,1,2), axis = 2)
+Y = np.argsort(X, axis = -1)
+neighbors = np.logical_or(Y == 1 , Y == 2)
+
+# once we have this matrix definded, we compute an average between each point and it's neighbors
+
+################################
+#%% from zones, find target points
+
+# the 4 zones 
+zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+
+# for each zone, here is its 2 closest neighbours
+neighbours = np.array([[False,  True,  True, False],
+       [ True, False, False,  True],
+       [ True, False, False,  True],
+       [False,  True,  True, False]])
+
+s = time.time()
+
+# lambda to compute weighted average between 2 points
+average_points = lambda p1, p2, w: w * p1 + (1-w) * p2
+
+# this is what I want to vectorize
+targets = []
+target_weight = 0.8
+for i, neighbour in enumerate(neighbours):
+    zone = zones[i]
+    points = zones[neighbour]
+    p1 = average_points(zone, points[0], target_weight)
+    p2 = average_points(zone, points[1], target_weight)
+    target = average_points(p1, p2, 0.5)
+    targets.append(target)
+targets = np.array(targets)
+
+e = time.time()
+print(e-s)
+
+# let's make a little plot of this, for verification
+plt.figure()
+plt.plot(zones[:,0], zones[:,1], 'x')
+plt.plot(targets[:,0], targets[:,1], 'yx')
+plt.show()
+
+
 ################################
 #%% Find zones AFTER initial zones were found
 
