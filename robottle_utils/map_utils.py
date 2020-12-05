@@ -123,7 +123,7 @@ neighbours = np.array([[False,  True,  True, False],
 # lambda to compute weighted average between 2 points
 average_points = lambda p1, p2, w: w * p1 + (1-w) * p2
 
-def get_targets_from_zones(zones, target_weights = 0.8): 
+def get_targets_from_zones(zones, target_weight = 0.8): 
     """Given the computed zones, return target points where robot should go.
     Indeed, the 'zones' are the corner of the area and the robot can't go there.
     This function will select points that are within the real zone, and accessible for the robot. 
@@ -140,7 +140,6 @@ def get_targets_from_zones(zones, target_weights = 0.8):
     targets (r, z2, z3, z4): target points as defined above
     """
     targets = []
-    target_weight = 0.8
     for i, neighbour in enumerate(neighbours):
         zone = zones[i]
         points = zones[neighbour]
@@ -153,7 +152,7 @@ def get_targets_from_zones(zones, target_weights = 0.8):
 
 ### DEBUG FUNCTIONS
 
-def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = []):
+def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], path = []):
     """Make a nice plot, depending on the given parameters
     and saves it at the desired destination
 
@@ -164,15 +163,11 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
     theta: orientation of the robot [deg]
     contours: detected contours around obstacles
     corners: 4 corners of the bounding oriented rectangle
+    zones: 4 zones (order is the label)
+    path: list of points (best path so far)
     """
     # create RGB image (we do want some color here !)
     rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
-    if len(robot_pos):
-        print("Robot position : ", robot_pos)
-        cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
-        theta = np.deg2rad(theta)
-        pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
-        cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
     if len(contours):
         cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
     if len(corners):
@@ -181,9 +176,22 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
         for i, z in enumerate(zones):
             cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
+    if len(path):
+        for i, _ in enumerate(path[:-1]):
+            cv2.line(rgb_img, tuple(path[i]), tuple(path[i+1]), (0, 153, 51), 3) 
+    if len(robot_pos):
+        print("Robot position : ", robot_pos)
+        cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+        theta = np.deg2rad(theta)
+        pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
+        cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
+
 
     # save the image
-    cv2.imwrite(save_name, rgb_img)
+    if save_name:
+        cv2.imwrite(save_name, rgb_img)
+    
+    return rgb_img
 
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
