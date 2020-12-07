@@ -152,10 +152,9 @@ def get_targets_from_zones(zones, target_weight = 0.8):
 
 ### DEBUG FUNCTIONS
 
-def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], path = []):
+def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], path = [], text = ""):
     """Make a nice plot, depending on the given parameters
     and saves it at the desired destination
-
     Parameters
     binary_grid: binary map of the world
     save_name: where to save the img
@@ -165,6 +164,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
     corners: 4 corners of the bounding oriented rectangle
     zones: 4 zones (order is the label)
     path: list of points (best path so far)
+    text: text to write on the image
     """
     # create RGB image (we do want some color here !)
     rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
@@ -180,11 +180,13 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         for i, _ in enumerate(path[:-1]):
             cv2.line(rgb_img, tuple(path[i]), tuple(path[i+1]), (0, 153, 51), 3) 
     if len(robot_pos):
-        print("Robot position : ", robot_pos)
         cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
         theta = np.deg2rad(theta)
         pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
         cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
+    if len(text): 
+        cv2.putText(rgb_img, text, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, color = (0,0,0), thickness = 2)
+
 
 
     # save the image
@@ -196,7 +198,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
     Returns True if there is an obstacle in the line in front of the robot, of
-    given length..
+    given length.
 
     Must be given
     - real dimensions of the map : w, h
