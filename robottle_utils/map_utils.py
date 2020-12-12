@@ -3,6 +3,10 @@ import numpy as np
 import cv2
 
 
+
+### HELPER FUNCTIONS
+
+
 def pos_to_gridpos(x, y, N_pixs = 500, L = 10):
     """Retuns the given position in meters to a grid position as a numpy array. 
     N_pixs is the number of pixels per side, and L is the actual lenght of 1 side.
@@ -22,37 +26,7 @@ def plot_map(occupancy_grid):
     plt.imshow(occupancy_grid, cmap="binary")
 
 
-def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = []):
-    """Make a nice plot, depending on the given parameters
-    and saves it at the desired destination
-
-    Parameters
-    binary_grid: binary map of the world
-    save_name: where to save the img
-    robot_pos: position of the robot (x,y)
-    theta: orientation of the robot [deg]
-    contours: detected contours around obstacles
-    corners: 4 corners of the bounding oriented rectangle
-    """
-    # create RGB image (we do want some color here !)
-    rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
-    if len(robot_pos):
-        print("Robot position : ", robot_pos)
-        cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
-        theta = np.deg2rad(theta)
-        pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
-        cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
-    if len(contours):
-        cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
-    if len(corners):
-        cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
-    if len(zones):
-        colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
-        for i, z in enumerate(zones):
-            cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
-
-    # save the image
-    cv2.imwrite(save_name, rgb_img)
+### MAP FILTERING
 
 def filter_map(occupancy, threshold = 90, kernel_size = 5):
     """From the initial occupancy_grid (straight out of the SLAM) returns a new and cleaner version of it.
@@ -75,7 +49,9 @@ def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
     save_name (string): name to save the figure at (if None provided, will not save)
 
     Returns
-    rot_ret (x,y,w,h): the rectable that goes around the map
+    corners (p1,p2,p3,p4): the 4 corners of the rectangles
+    area (int): number of pixels inside the rectangle (used to select valid rectangle)
+    contours ([[points]]): all the detected contours (used for plotting)
     """
     # find contours and only keep important ones
     cntrs, hierarchy = cv2.findContours(binary_grid, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -85,13 +61,19 @@ def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
         contour = np.concatenate(contours).reshape(-1,2)
         # find a rotated rectangle around those points
         rot_rect = cv2.minAreaRect(contour)
+        area = rot_rect[1][0] *  rot_rect[1][1] # rot_rect[1] = size = [w,h]
         corners = np.int0(cv2.boxPoints(rot_rect)) # cv2.boxPoints(rect) for OpenCV 3.x
         if save_name:
             # let's save the picture somewhere
             make_nice_plot(binary_grid, save_name, corners = corners, contours = contours)
-        return corners, contours
+        return corners, area, contours
+    else:
+        return None
 
-def get_zones(corners, robot_position):
+
+### 'ZONES FUNCTION'
+
+def get_initial_zones(corners, robot_position):
     """Returns the outermost position of the zones (recyling, zone2, zone3, zone4)
     given the initial corners of the map and the initial robot position. 
 
@@ -99,6 +81,9 @@ def get_zones(corners, robot_position):
     - the closest point of the robot is the recycling area
     - the further away is the zone 4 (the ramp) 
     - the zones 2 and 3 are at the right and at the left of the map
+
+    Returns
+    zones (recycling, z2, z3, z4)
     """
     # 1. find points closest and the further away from robot
     # this gives recycling area and the ramp zone
@@ -115,9 +100,105 @@ def get_zones(corners, robot_position):
 
     return (r, p2, p3, p4)
 
+def get_zones_from_previous(corners, previous_zones):
+    """Given the 4 corners found and the previous zones detected (assuming that those
+    are the correct ones) it will order the new zones so that closest points are in the 
+    same position.
+
+    Returns
+    zones (recycling, z2, z3, z4)
+    """
+    new_zones = np.array(corners)
+    previous_zones = np.array(previous_zones)
+    X = previous_zones.reshape(1, 4, 2) - new_zones.reshape(4, 1, 2)
+    idcs = (X * X).sum(axis=2).argmin(axis = 0)
+    return new_zones[idcs]
+
+# for each zone, here is its 2 closest neighbours
+neighbours = np.array([[False,  True,  True, False],
+       [ True, False, False,  True],
+       [ True, False, False,  True],
+       [False,  True,  True, False]])
+
+# lambda to compute weighted average between 2 points
+average_points = lambda p1, p2, w: w * p1 + (1-w) * p2
+
+def get_targets_from_zones(zones, target_weight = 0.8): 
+    """Given the computed zones, return target points where robot should go.
+    Indeed, the 'zones' are the corner of the area and the robot can't go there.
+    This function will select points that are within the real zone, and accessible for the robot. 
+
+    Parameters
+    zone (r, z2, z3, z4)
+    target_weight (float in [0,1]): the smaller, the further away is the target from the corner.
+
+    Requires
+    -neighbours matrix must be defined
+    -average_points lambda must be defined
+
+    Returns 
+    targets (r, z2, z3, z4): target points as defined above
+    """
+    targets = []
+    for i, neighbour in enumerate(neighbours):
+        zone = zones[i]
+        points = zones[neighbour]
+        p1 = average_points(zone, points[0], target_weight)
+        p2 = average_points(zone, points[1], target_weight)
+        target = average_points(p1, p2, 0.5)
+        targets.append(target)
+    return np.array(targets)
+
+
+### DEBUG FUNCTIONS
+
+def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], path = [], text = ""):
+    """Make a nice plot, depending on the given parameters
+    and saves it at the desired destination
+    Parameters
+    binary_grid: binary map of the world
+    save_name: where to save the img
+    robot_pos: position of the robot (x,y)
+    theta: orientation of the robot [deg]
+    contours: detected contours around obstacles
+    corners: 4 corners of the bounding oriented rectangle
+    zones: 4 zones (order is the label)
+    path: list of points (best path so far)
+    text: text to write on the image
+    """
+    # create RGB image (we do want some color here !)
+    rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
+    if len(contours):
+        cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
+    if len(corners):
+        cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
+    if len(zones):
+        colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
+        for i, z in enumerate(zones):
+            cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
+    if len(path):
+        for i, _ in enumerate(path[:-1]):
+            cv2.line(rgb_img, tuple(path[i]), tuple(path[i+1]), (0, 153, 51), 3) 
+    if len(robot_pos):
+        cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+        theta = np.deg2rad(theta)
+        pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
+        cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
+    if len(text): 
+        cv2.putText(rgb_img, text, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, color = (0,0,0), thickness = 2)
+
+
+
+    # save the image
+    if save_name:
+        cv2.imwrite(save_name, rgb_img)
+    
+    return rgb_img
+
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):
     """
-    Returns True if there is an obstacle in the line in front of the robot, of given length..
+    Returns True if there is an obstacle in the line in front of the robot, of
+    given length.
 
     Must be given
     - real dimensions of the map : w, h

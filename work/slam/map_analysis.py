@@ -17,17 +17,86 @@ def plot_image(img):
     plt.imshow(img, cmap = "binary")
     plt.show()
 
-#%% Read one of the map that was saved from ROS
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/mercantour1240.npy")
+
+################################
+#%% Find neighboords of each point
+
+zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+
+# for each point, find its neighors (can be done only one)
+X = np.linalg.norm(zones.reshape(1,4,2) - zones.reshape(4,1,2), axis = 2)
+Y = np.argsort(X, axis = -1)
+neighbors = np.logical_or(Y == 1 , Y == 2)
+
+# once we have this matrix definded, we compute an average between each point and it's neighbors
+
+################################
+#%% from zones, find target points
+
+# the 4 zones 
+zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+
+# for each zone, here is its 2 closest neighbours
+neighbours = np.array([[False,  True,  True, False],
+       [ True, False, False,  True],
+       [ True, False, False,  True],
+       [False,  True,  True, False]])
+
+s = time.time()
+
+# lambda to compute weighted average between 2 points
+average_points = lambda p1, p2, w: w * p1 + (1-w) * p2
+
+# this is what I want to vectorize
+targets = []
+target_weight = 0.8
+for i, neighbour in enumerate(neighbours):
+    zone = zones[i]
+    points = zones[neighbour]
+    p1 = average_points(zone, points[0], target_weight)
+    p2 = average_points(zone, points[1], target_weight)
+    target = average_points(p1, p2, 0.5)
+    targets.append(target)
+targets = np.array(targets)
+
+e = time.time()
+print(e-s)
+
+# let's make a little plot of this, for verification
+plt.figure()
+plt.plot(zones[:,0], zones[:,1], 'x')
+plt.plot(targets[:,0], targets[:,1], 'yx')
+plt.show()
+
+
+################################
+#%% Find zones AFTER initial zones were found
+
+# zones = (recycling, z2, z3, z4)
+
+previous_zones = np.array(([ 63, 245], [398, 213], [45, 56], [380,  24]))
+new_zones = np.array(([ 73, 255], [388, 223], [55, 46], [370,  34]))
+np.random.shuffle(new_zones)
+
+X = previous_zones.reshape(1, 4, 2) - new_zones.reshape(4, 1, 2)
+idcs = (X * X).sum(axis=2).argmin(axis = 0)
+
+
+
+
+###################################
+#%% Make a nice plot with all the given information
+
+occupancy = np.load("/home/arthur/dev/ros/data/maps/lore_1.npy")
 # plot_image(occupancy)
 
 robot_pos = np.array([150, 350, 1])
 
 # obtain data from image processing
 binary_grid = map_utils.filter_map(occupancy)
-corners, contours  = map_utils.get_bounding_rect(binary_grid) 
-zones = map_utils.get_zones(corners, robot_pos[:2])
+corners, area, contours  = map_utils.get_bounding_rect(binary_grid) 
+zones = map_utils.get_initial_zones(corners, robot_pos[:2])
 
 # make a nice plot with all this (code for the plotting function)
 rgb_img = cv2.cvtColor(binary_grid*255, cv2.COLOR_GRAY2RGB)
@@ -37,6 +106,7 @@ cv2.drawContours(rgb_img, contours, -1, (0,255,0), 2)
 cv2.drawContours(rgb_img,[corners],0,(0,0,255),2)
 # position of the robot
 cv2.circle(rgb_img, tuple(robot_pos[:2]), 5, (0,0,204), cv2.FILLED)
+theta = robot_pos[2]
 pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
 cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
 # position of the 4 zones
@@ -80,13 +150,15 @@ p2, p3 = corners[i_p2], corners[i_p3]
 
 # according to 'cv2.findcontours' we want to have zero = 
 
+occupancy = np.load("/home/arthur/dev/ros/data/maps/lore_1.npy")
+
 threshold = 90
 binary = np.uint8(occupancy > threshold)
 plot_image(binary)
 binary = cv2.medianBlur(binary, ksize=5)
 plot_image(binary)
 
-#%% contour detection (WORKING but weak)
+# contour detection (WORKING but weak)
 
 cntrs, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 rgb_img = cv2.cvtColor(binary*255, cv2.COLOR_GRAY2RGB)
@@ -94,7 +166,7 @@ contours = [c for c in cntrs if len(c) > 30]
 cv2.drawContours(rgb_img, contours, -1, (0,255,0), 3)
 plot_image(rgb_img)
 
-#%% Find oriented rectangle (Working ! )
+# Find oriented rectangle (Working ! )
 
 points = np.where(binary == 0)
 X = np.array(points)
