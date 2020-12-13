@@ -28,17 +28,21 @@ def plot_map(occupancy_grid):
 
 ### MAP FILTERING
 
-def filter_map(occupancy, threshold = 90, kernel_size = 5):
+def filter_map(occupancy, threshold = 90, median_kernel_size = 5, dilation_kernel_size = 10):
     """From the initial occupancy_grid (straight out of the SLAM) returns a new and cleaner version of it.
+    It is possible to perform a binary dilation of the image, to inflate obstacles.
 
     Parameters
     occupancy ([[int]]): occupancy grid given by SLAM as numpy array
     threshold (int): binary threshold to discriminate obstacles from free space
-    kernel_size (int): kernel size to use for median filter.
+    median_kernel_size (int): kernel size to use for median filter.
+    dilation_kernel_size (int): kernel size to perform obstacles inflation
     """
     binary = np.uint8(occupancy > threshold)
-    binary = cv2.medianBlur(binary, ksize = kernel_size)
-    return binary
+    binary = cv2.medianBlur(binary, ksize = median_kernel_size)
+    kernel = np.ones((dilation_kernel_size, dilation_kernel_size), np.uint8)
+    binary_dilated = cv2.erode(binary, kernel)
+    return binary_dilated
 
 def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
     """Returns an oriented rectangle (x,y,w,h) which surrounds the map.
@@ -147,12 +151,12 @@ def get_targets_from_zones(zones, target_weight = 0.8):
         p2 = average_points(zone, points[1], target_weight)
         target = average_points(p1, p2, 0.5)
         targets.append(target)
-    return np.array(targets)
+    return np.array(targets).astype(int)
 
 
 ### DEBUG FUNCTIONS
 
-def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], path = [], text = ""):
+def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], targets = [], path = [], text = ""):
     """Make a nice plot, depending on the given parameters
     and saves it at the desired destination
     Parameters
@@ -163,6 +167,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
     contours: detected contours around obstacles
     corners: 4 corners of the bounding oriented rectangle
     zones: 4 zones (order is the label)
+    targerts: the 4 zones that were moved to be inside the arena
     path: list of points (best path so far)
     text: text to write on the image
     """
@@ -176,6 +181,10 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
         for i, z in enumerate(zones):
             cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
+    if len(targets):
+        colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
+        for i, z in enumerate(targets):
+            cv2.circle(rgb_img, tuple(z), 5, colors[i], cv2.FILLED)
     if len(path):
         for i, _ in enumerate(path[:-1]):
             cv2.line(rgb_img, tuple(path[i]), tuple(path[i+1]), (0, 153, 51), 3) 
@@ -185,7 +194,11 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         pt2 = robot_pos[:2] + 50 * np.array([np.cos(theta), np.sin(theta)])
         cv2.arrowedLine(rgb_img, tuple(robot_pos[:2]),tuple(pt2.astype(int)), color = (0,0,204), thickness = 2)
     if len(text): 
-        cv2.putText(rgb_img, text, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, color = (0,0,0), thickness = 2)
+        y0, dy = 400, 40
+        for i, line in enumerate(text.split('\n')):
+            y = y0 + i*dy
+            cv2.putText(rgb_img, line, (30, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+        # cv2.putText(rgb_img, text, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color = (0,0,0), thickness = 2)
 
 
 
