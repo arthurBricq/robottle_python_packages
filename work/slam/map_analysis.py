@@ -84,11 +84,10 @@ idcs = (X * X).sum(axis=2).argmin(axis = 0)
 
 
 
-
 ###################################
 #%% Make a nice plot with all the given information
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/lore_1.npy")
+occupancy = np.load("/home/arthur/dev/ros/data/maps/inhibit0.npy")
 # plot_image(occupancy)
 
 robot_pos = np.array([150, 350, 1])
@@ -117,9 +116,6 @@ for i, z in enumerate(zones):
 
 plt.imshow(rgb_img)
 plt.show()
-
-
-
 
 
 

@@ -43,3 +43,11 @@ def take_picture(save = False, name = ""):
         print("Going to save at : ", file_name)
         print(cv2.imwrite(file_name ,frame))
     return frame
+
+
+def get_angle_of_closest_bottle(bounding_boxes):
+    """Returns the angle of the closest bottle that is to the right of the robot.
+    TODO
+    """
+    return 0
+
