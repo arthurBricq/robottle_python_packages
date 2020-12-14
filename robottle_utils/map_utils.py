@@ -197,9 +197,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         y0, dy = 400, 40
         for i, line in enumerate(text.split('\n')):
             y = y0 + i*dy
-            cv2.putText(rgb_img, line, (30, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-        # cv2.putText(rgb_img, text, (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color = (0,0,0), thickness = 2)
-
+            cv2.putText(rgb_img, line, (30, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, 6)
 
 
     # save the image
