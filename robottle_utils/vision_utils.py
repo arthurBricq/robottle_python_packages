@@ -47,11 +47,10 @@ def take_picture(save = False, name = ""):
 
 
 
-def save_picture(pixels, rows, cols, dim, name):
+def save_picture(pixels, rows, cols, dim, name, folder):
     """Save the picture given using cv2, from the video input topic of ROS"""
     frame = np.reshape(pixels, (rows, cols, dim))
     # save the picture here 
-    folder = "/home/arthur/dev/ros/pictures/f1/"
     file_name = os.path.join(folder, name + '.jpg')
     print("Going to save at : ", file_name)
     print(cv2.imwrite(file_name ,frame))
