@@ -99,7 +99,7 @@ def get_initial_zones(corners, robot_position):
     # 2. use sign of the cross product to find which are zone 2 and zone 3
     diag = p4 - r
     cross_products = np.cross(diag, corners - r)
-    i_p3, i_p2 = cross_products.argmin(), cross_products.argmax()
+    i_p2, i_p3 = cross_products.argmin(), cross_products.argmax()
     p2, p3 = corners[i_p2], corners[i_p3]
 
     return (r, p2, p3, p4)
