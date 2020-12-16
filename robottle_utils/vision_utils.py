@@ -55,3 +55,14 @@ def save_picture(pixels, rows, cols, dim, name, folder):
     print("Going to save at : ", file_name)
     print(cv2.imwrite(file_name ,frame))
     return frame
+
+def get_angle_of_closest_bottle(detections):
+    """This function returns the angle to rotate in order to reach the next bottle 
+    towards the right of the robot. 
+    It can also return None if no good candidates were found.
+
+    PARAMETERS
+    detections [(x,y,w,h)]
+    """
+    # TODO 
+    return None
