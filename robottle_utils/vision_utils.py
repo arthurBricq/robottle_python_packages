@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 
 PIXELS_PER_DEGREE = 12.5    # pixels per degree on the x axis of an image
+X_CENTER_PIXEL = 700        # pixel that corresponds to center of image in x direction
 
 # private function to have access to the streaming
 def gstreamer_pipeline(
@@ -75,4 +76,4 @@ def get_angle_of_closest_bottle(detections):
             closest_detection = detection
 
     # compute angle of detection
-    return detection[0] / PIXELS_PER_DEGREE
+    return (X_CENTER_PIXEL - detection[0]) / PIXELS_PER_DEGREE
