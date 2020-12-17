@@ -75,4 +75,4 @@ def get_angle_of_closest_bottle(detections):
             closest_detection = detection
 
     # compute angle of detection
-    return (X_CENTER_PIXEL - detection[0]) / PIXELS_PER_DEGREE
+    return (detection[0] - X_CENTER_PIXEL) / PIXELS_PER_DEGREE
