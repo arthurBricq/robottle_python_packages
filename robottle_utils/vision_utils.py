@@ -74,5 +74,5 @@ def get_angle_of_closest_bottle(detections):
         if detection[1] > closest_detection[1]:
             closest_detection = detection
 
-    # compute angle of detection
+    # compute angle of detection: positive when bottle on left side
     return (detection[0] - X_CENTER_PIXEL) / PIXELS_PER_DEGREE
