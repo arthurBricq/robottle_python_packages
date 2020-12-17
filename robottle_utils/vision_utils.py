@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 
+PIXELS_PER_DEGREE = 12.5    # pixels per degree on the x axis of an image
+
 # private function to have access to the streaming
 def gstreamer_pipeline(
     capture_width=1280,
@@ -38,7 +40,7 @@ def take_picture(save = False, name = ""):
     ret, frame = cap.read()
     cap.release()
     if save:
-        # save the picture here 
+        # save the picture here
         folder = "/home/arthur/dev/ros/pictures/f1/"
         file_name = os.path.join(folder, name + '.jpg')
         print("Going to save at : ", file_name)
@@ -50,19 +52,27 @@ def take_picture(save = False, name = ""):
 def save_picture(pixels, rows, cols, dim, name, folder):
     """Save the picture given using cv2, from the video input topic of ROS"""
     frame = np.reshape(pixels, (rows, cols, dim))
-    # save the picture here 
+    # save the picture here
     file_name = os.path.join(folder, name + '.jpg')
     print("Going to save at : ", file_name)
     print(cv2.imwrite(file_name ,frame))
     return frame
 
 def get_angle_of_closest_bottle(detections):
-    """This function returns the angle to rotate in order to reach the next bottle 
-    towards the right of the robot. 
+    """This function returns the angle to rotate in order to reach the next bottle
+    towards the right of the robot.
     It can also return None if no good candidates were found.
 
     PARAMETERS
     detections [(x,y,w,h)]
     """
-    # TODO 
-    return None
+    # TODO
+
+    closest_detection = (0,0,0,0)
+    # find closest detection by checking center of y axis
+    for detection in detections:
+        if detection[1] > closest_detection[1]:
+            closest_detection = detection
+
+    # compute angle of detection
+    return detection[0] / PIXELS_PER_DEGREE
