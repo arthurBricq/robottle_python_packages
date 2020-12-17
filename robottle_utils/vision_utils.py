@@ -62,12 +62,11 @@ def save_picture(pixels, rows, cols, dim, name, folder):
 def get_angle_of_closest_bottle(detections):
     """This function returns the angle to rotate in order to reach the next bottle
     towards the right of the robot.
-    It can also return None if no good candidates were found.
+    TODO It can also return None if no good candidates were found.
 
     PARAMETERS
     detections [(x,y,w,h)]
     """
-    # TODO
 
     closest_detection = (0,0,0,0)
     # find closest detection by checking center of y axis
