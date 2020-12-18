@@ -1,4 +1,4 @@
-f = open("images\_detection.txt")
+f = open('C:\Users\Lorenzo Jacqueroud\git\robottle_python_packages\work\bottle_detection\_detection.txt')
 det = []
 detections = []
 
