@@ -51,8 +51,10 @@ class RRT:
         """
         self.start = self.Node(start[0], start[1])
         self.end = self.Node(goal[0], goal[1])
-        self.min_rand = rand_area[0]
-        self.max_rand = rand_area[1]
+        self.min_rand_x = rand_area[0]
+        self.max_rand_x = rand_area[1]
+        self.min_rand_y = rand_area[2]
+        self.max_rand_y = rand_area[3]
         self.expand_dis = expand_dis
         self.path_resolution = path_resolution
         self.goal_sample_rate = goal_sample_rate
@@ -155,8 +157,8 @@ class RRT:
     def get_random_node(self):
         if random.randint(0, 100) > self.goal_sample_rate:
             rnd = self.Node(
-                random.uniform(self.min_rand, self.max_rand),
-                random.uniform(self.min_rand, self.max_rand))
+                random.uniform(self.min_rand_x,self.max_rand_x),
+                random.uniform(self.min_rand_y, self.max_rand_y))
         else:  # goal point sampling
             rnd = self.Node(self.end.x, self.end.y)
         return rnd
