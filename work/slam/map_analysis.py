@@ -16,7 +16,46 @@ def plot_image(img):
     plt.imshow(img, cmap = "binary")
     plt.show()
 
+##################################
+#%% find rocks or obstacles
 
+robot_pos = [200, 200, 45]
+zones = np.array(([ 63, 245], [298, 213], [45, 56], [280,  24]))
+
+# compute the points delimiting the rocks zone
+w = 0.25
+p1 = w * zones[0] + (1 - w) * zones[2]
+p2 = w * zones[1] + (1 - w) * zones[2]
+p3 = w * zones[3] + (1 - w) * zones[2]
+
+# get the position of the obstacle (b for bottle)
+theta = robot_pos[2] / 57.3
+dx_pixels = 10
+b = [robot_pos[0] + dx_pixels * np.cos(theta), 
+        robot_pos[1] + dx_pixels * np.sin(theta)] 
+
+# compute distances 
+v12 = p2 - p1
+v1b = b - p1
+d12_p = np.dot(v1b, v12) / np.linalg.norm(v12) # projection orthogonale
+d1b = np.linalg.norm(v1b)
+distance_to_rocks_1 = np.sqrt(d1b ** 2 - d12_p ** 2)
+
+v32 = p2 - p3
+v3b = b - p3
+d32_p = np.dot(v3b, v32) / np.linalg.norm(v32) # projection orthogonale
+d3b = np.linalg.norm(v3b)
+distance_to_rocks_2 = np.sqrt(d3b ** 2 - d32_p ** 2)
+
+# logic over distances
+if min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels:
+    return True 
+return False 
+
+#%% let's make a little plot of this, for verification
+plt.figure()
+plt.plot(zones[:,0], zones[:,1], 'x')
+plt.show()
 
 ################################
 #%% Find neighboords of each point

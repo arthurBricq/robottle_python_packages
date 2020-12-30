@@ -25,7 +25,6 @@ def plot_map(occupancy_grid):
     """Plot the map in the current matplotlib.pyplot.figure"""
     plt.imshow(occupancy_grid, cmap="binary")
 
-
 ### MAP FILTERING
 
 def filter_map(occupancy, threshold = 90, median_kernel_size = 5, dilation_kernel_size = 10):
