@@ -2,6 +2,14 @@ import numpy as np
 
 def check_obstacle_ahead(distances, angles, save_index = None, length_to_check = 1000, half_robot_width = 150):
     """Given LIDAR data, returns 'True' if there is an obstacle in front of the robot.
+
+    The code looks for angles infront of the robot divided in 2 zones
+    - the triangle in front of the robot, angles delimited by angle delta (zone 2)
+    - the complementary part of this previous triangle from the rectangle in front of the robot (zone 1)
+
+    For each of those angles, it computes the 'critical distance' at which there should not be an obtatscle.
+    If there are, it counts the number of detected 'obstacles' (i.e. distances below critcal distance for this angle)
+    and return a heuristic rule to distinguish standing bottles from real obstacles.
     """
     print("Will save lidar data batch number ", save_index)
     distances = np.array(distances)
