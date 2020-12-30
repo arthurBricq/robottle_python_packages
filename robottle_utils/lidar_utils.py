@@ -1,3 +1,42 @@
+import numpy as np
+
+def check_obstacle_ahead(distances, angles, save_index = None, length_to_check = 1000, half_robot_width = 150):
+    """Given LIDAR data, returns 'True' if there is an obstacle in front of the robot.
+    """
+    print("Will save lidar data batch number ", save_index)
+    distances = np.array(distances)
+    angles = np.array(angles)
+    # compute angle to differentiate regions
+    delta = np.arctan(half_robot_width / length_to_check) * 57.3
+
+    # compute the indices for the 2 regions of interest
+    idcs1 = np.logical_or(np.logical_and(angles <= 90, angles >= delta), np.logical_and(angles >= 270, angles <= (360 - delta)))
+    idcs2 = np.logical_or(np.logical_and(angles >= 0, angles <= delta), np.logical_and(angles <= 360, angles >= (360 - delta)))
+
+    # compute the critical ditance for those regions (set of angles)
+    critical_distance_1 = half_robot_width / np.abs(np.sin(angles[idcs1] / 57.3))
+    critical_distance_2 = length_to_check / np.abs(np.cos(angles[idcs2] / 57.3))
+
+    # compare actual distances with critical distances
+    obstacles1 = distances[idcs1] < critical_distance_1
+    obstacles2 = distances[idcs2] < critical_distance_2
+     
+    # save for debug
+    if save_index is not None:
+        np.save("/home/arthur/dev/ros/data/lidar/angles_{}.npy".format(save_index), angles)
+        np.save("/home/arthur/dev/ros/data/lidar/distances_{}.npy".format(save_index), distances)
+    
+    # return true depending on the obstacle detection
+    to_return = (np.count_nonzero(obstacles1) + np.count_nonzero(obstacles2)) >= 8
+
+    if to_return:
+        print("detected")
+
+    return False
+
+
+
+
 def get_valid_lidar_range(distances, angles, threshold = 600, n_points = 6):
     """
     Given the 'distances' array of LIDAR, it returns the indexes 'i1' and 'i2' that must be taken into account.

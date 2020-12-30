@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import sys
-%matplotlib qt
 
 from robottle_utils import map_utils
 

@@ -154,6 +154,18 @@ def get_targets_from_zones(zones, target_weight = 0.8):
     return np.array(targets).astype(int)
 
 
+def get_random_area(zones):
+    """Given the 4 zones, returns the random area [x_min, x_max, y_min, y_max] where to sample
+    points for the path planner. 
+    
+    Parameters
+    zones (numpy array of the 4 zones)
+    """
+    mins = zones.min(axis = 0)
+    maxs = zones.max(axis = 0)
+    return [mins[0], maxs[0], mins[1], maxs[1]]
+
+
 ### DEBUG FUNCTIONS
 
 def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours = [], corners = [], zones = [], targets = [], path = [], text = ""):
