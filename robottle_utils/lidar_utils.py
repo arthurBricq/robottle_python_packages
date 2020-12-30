@@ -11,7 +11,6 @@ def check_obstacle_ahead(distances, angles, save_index = None, length_to_check =
     If there are, it counts the number of detected 'obstacles' (i.e. distances below critcal distance for this angle)
     and return a heuristic rule to distinguish standing bottles from real obstacles.
     """
-    print("Will save lidar data batch number ", save_index)
     distances = np.array(distances)
     angles = np.array(angles)
     # compute angle to differentiate regions
@@ -37,10 +36,7 @@ def check_obstacle_ahead(distances, angles, save_index = None, length_to_check =
     # return true depending on the obstacle detection
     to_return = (np.count_nonzero(obstacles1) + np.count_nonzero(obstacles2)) >= 8
 
-    if to_return:
-        print("detected")
-
-    return False
+    return to_return
 
 
 
