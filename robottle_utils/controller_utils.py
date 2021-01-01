@@ -61,10 +61,14 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
     d3b = np.linalg.norm(v3b)
     distance_to_rocks_2 = np.sqrt(d3b ** 2 - d32_p ** 2)
 
+    # compute the angle
+    # TODO
+    angle = 30
+
     # logic over distances
     if min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels:
-        return True
-    return False
+        return True, angle
+    return False, None
 
 
 
