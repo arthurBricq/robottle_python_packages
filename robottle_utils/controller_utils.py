@@ -35,7 +35,6 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
     # compute the points delimiting the rocks zone
     w = 0.25
     zones = np.array(zones)
-    print(zones)
     p1 = w * zones[0] + (1 - w) * zones[2]
     p2 = w * zones[1] + (1 - w) * zones[2]
     p3 = w * zones[3] + (1 - w) * zones[2]
@@ -46,7 +45,6 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
     dx_pixels = 10
     b = [robot_pos[0] + dx_pixels * np.cos(theta),
             robot_pos[1] + dx_pixels * np.sin(theta)]
-    print(b, robot_pos)
 
     # compute distances
     v12 = p2 - p1
