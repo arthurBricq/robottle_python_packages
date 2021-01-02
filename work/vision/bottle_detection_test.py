@@ -39,7 +39,7 @@ angles = np.tan(positions[:,1] / positions[:, 0]) * 180 / np.pi
 
 #%% 
 
-poly = PolynomialFeatures(degree = 1)
+poly = PolynomialFeatures(degree = 3)
 qs = poly.fit_transform(detections).T
 z = angles
 A = (qs @ qs.T)

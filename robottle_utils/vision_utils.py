@@ -59,7 +59,7 @@ def save_picture(pixels, rows, cols, dim, name, folder):
     print(cv2.imwrite(file_name ,frame))
     return frame
 
-def get_angle_of_closest_bottle(detections, P = array([[-3.19228946e+01],
+def get_angle_of_closest_bottle(detections, P = np.array([[-3.19228946e+01],
        [ 6.95338103e-02],
        [-2.71226544e-02],
        [-3.25254858e-05],
