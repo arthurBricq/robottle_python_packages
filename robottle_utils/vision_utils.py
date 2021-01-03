@@ -59,7 +59,7 @@ def save_picture(pixels, rows, cols, dim, name, folder):
     print(cv2.imwrite(file_name ,frame))
     return frame
 
-def get_angle_of_closest_bottle(detections, P = np.array([[-3.19228946e+01],
+def get_angle_of_detection(detection, P = np.array([[-3.19228946e+01],
        [ 6.95338103e-02],
        [-2.71226544e-02],
        [-3.25254858e-05],
@@ -76,16 +76,39 @@ def get_angle_of_closest_bottle(detections, P = np.array([[-3.19228946e+01],
     PARAMETERS
     detections [(x,y,w,h)]
     """
-    # find closest detection by checking center of y axis
-    closest_detection = (0,0,0,0)
-    for detection in detections:
-        if detection[1] > closest_detection[1]:
-            closest_detection = detection
-    x,y,w,h = closest_detection
-    y -= h/2
+    x,y,w,h = detection
+    y += h/2
 
     # compute angle
     angle = P[6]*x**3 + P[7]*x**2*y + P[8]*x*y**2 + P[9]*y**3 + P[3]*x**2 + P[4]*x*y + P[5]*y**2 + P[1]*x + P[2]*y + P[0]
 
     # compute angle of detection: positive when bottle on right side
     return angle
+
+def get_best_detections(detections, dim_h = 720, dim_w = 1280):
+    """
+    Given an array of detected bounding box, returns the one the robot
+    must go toward.
+
+    Parameters
+    ----------
+    detections ([(x,y,w,h,is_flipped)]), length must be greater than 1 !
+    """
+    # 1. find the best index
+    shortest_distance = 10000
+    for i in range(len(detections)):
+        x,y,w,h,is_flipped = detections[i]
+        distance = (dim_h - x - w/2)if is_flipped else (dim_h - y - h/2)
+        if distance < shortest_distance:
+            shortest_distance = distance
+            best_index = i
+    # 2. return the best detection
+    x,y,w,h,is_flipped = detections[i]
+    return (dim_w - y, x, h, w) if is_flipped else (x,y,w,h)
+
+
+
+
+
+
+

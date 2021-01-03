@@ -70,3 +70,16 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
