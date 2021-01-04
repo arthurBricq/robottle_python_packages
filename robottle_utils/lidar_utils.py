@@ -34,7 +34,7 @@ def check_obstacle_ahead(distances, angles, save_index = None, length_to_check =
         np.save("/home/arthur/dev/ros/data/lidar/distances_{}.npy".format(save_index), distances)
     
     # return true depending on the obstacle detection
-    print("lidar count: ", np.count_nonzero(obstacles1) + np.count_nonzero(obstacles2))
+    print("lidar count: ", np.count_nonzero(obstacles1) , np.count_nonzero(obstacles2))
     to_return = (np.count_nonzero(obstacles1) + np.count_nonzero(obstacles2)) >= 8
 
     return to_return
