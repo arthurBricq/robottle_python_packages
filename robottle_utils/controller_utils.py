@@ -20,17 +20,53 @@ def get_rotation_time(angle_to_reach):
     """
     return angle_to_reach / ROTATION_SPEED
 
-def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
+def lineseg_dists(p, a, b):
+    """Cartesian distance from point to line segment
+
+    Edited to support arguments as series, from:
+    https://stackoverflow.com/a/54442561/11208892
+
+    Args:
+        - p: np.array of single point, shape (2,) or 2D array, shape (x, 2)
+        - a: np.array of shape (x, 2)
+        - b: np.array of shape (x, 2)
+    """
+    # normalized tangent vectors
+    d_ba = b - a
+    d = np.divide(d_ba, (np.hypot(d_ba[:, 0], d_ba[:, 1])
+                           .reshape(-1, 1)))
+
+    # signed parallel distance components
+    # rowwise dot products of 2D vectors
+    s = np.multiply(a - p, d).sum(axis=1)
+    t = np.multiply(p - b, d).sum(axis=1)
+
+    # clamped parallel distance
+    h = np.maximum.reduce([s, t, np.zeros(len(s))])
+
+    # perpendicular distance component
+    # rowwise cross products of 2D vectors  
+    d_pa = p - a
+    c = d_pa[:, 0] * d[:, 1] - d_pa[:, 1] * d[:, 0]
+
+    return np.hypot(h, c)
+
+def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 12.5, dx_pixels = 10):
     """Given the position of the robot and the zones, 
     it will do the following steps
     - find the points delimiting the rocks zone
     - compute the minimum distance between the estimated position of the bottle and the line of rocks
 
-    TODO
-    - tune dx_pixels and threshold_pixels
+    Parameters
+    ----------
+    robot pos (x_pix, y_pix, theta)
+    zones 
+    threshold_pixels (int): min distance between estimated bottle pos and the rocks lines. 
+    dx_pixels (int): 10 is for 24 [cm] ahead of the robot, where bottle is. 
+
     """
     if zones is None or not len(zones):
-        return False
+        return False, None
 
     # compute the points delimiting the rocks zone
     w = 0.25
@@ -41,30 +77,27 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 30):
 
     # get the position of the obstacle (b for bottle)
     theta = robot_pos[2] / 57.3
-    # TODO
-    dx_pixels = 10
-    b = [robot_pos[0] + dx_pixels * np.cos(theta),
-            robot_pos[1] + dx_pixels * np.sin(theta)]
+    b = np.array([robot_pos[0] + dx_pixels * np.cos(theta),
+            robot_pos[1] + dx_pixels * np.sin(theta)])
 
-    # compute distances
-    v12 = p2 - p1
-    v1b = b - p1
-    d12_p = np.dot(v1b, v12) / np.linalg.norm(v12) # projection orthogonale
-    d1b = np.linalg.norm(v1b)
-    distance_to_rocks_1 = np.sqrt(d1b ** 2 - d12_p ** 2)
-
-    v32 = p2 - p3
-    v3b = b - p3
-    d32_p = np.dot(v3b, v32) / np.linalg.norm(v32) # projection orthogonale
-    d3b = np.linalg.norm(v3b)
-    distance_to_rocks_2 = np.sqrt(d3b ** 2 - d32_p ** 2)
-
-    # compute the angle
-    # TODO
-    angle = 30
+    # compute distances to rock lines
+    points1 = np.array([p1, p2])
+    points2 = np.array([p2, p3])
+    distances = lineseg_dists(b, points1, points2)
+    distance_to_rocks_1, distance_to_rocks_2 = distances[0], distances[1]
+    print(distance_to_rocks_1, distance_to_rocks_2, min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels)
 
     # logic over distances
     if min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels:
+        # compute the angle the robot needs to rotate
+        if distance_to_rocks_1 < distance_to_rocks_2:
+            # robot must go toward direction 90 degrees
+            pass
+        else: 
+            # robot must go toward direction 
+            pass
+
+        angle = 30
         return True, angle
     return False, None
 
