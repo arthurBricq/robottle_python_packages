@@ -1,6 +1,6 @@
 import numpy as np
 
-def check_obstacle_ahead(distances, angles, save_index = None, length_to_check = 300, half_robot_width = 150):
+def check_obstacle_ahead(distances, angles, save_index = None, length_to_check = 150, half_robot_width = 150):
     """Given LIDAR data, returns 'True' if there is an obstacle in front of the robot.
 
     The code looks for angles infront of the robot divided in 2 zones
