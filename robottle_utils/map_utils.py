@@ -210,11 +210,11 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
             y = y0 + i*dy
             cv2.putText(rgb_img, line, (30, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, 6)
 
-
     # save the image
     if save_name:
         cv2.imwrite(save_name, rgb_img)
     
+
     return rgb_img
 
 def inspect_line(occupancy_grid, robot_position, length, w=10, h=10):

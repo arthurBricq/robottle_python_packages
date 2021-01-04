@@ -102,6 +102,12 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 12.5, dx_pixels = 10
     return False, None
 
 
+def angle_diff(theta1, theta2): 
+    """
+    Compute the angle difference for 2 angles [degrees]
+    """
+    diff = (theta1 - theta2 + 180) % 360 - 180
+    return diff
 
 
 
