@@ -6,6 +6,8 @@ import sys
 
 from robottle_utils import map_utils
 
+%matplotlib qt
+
 # what goes on in this file ? 
 # the goal of map analysis is to extract points on the SLAM map that corresponds to 
 # real points in the map (the center of each zones)
@@ -125,7 +127,7 @@ idcs = (X * X).sum(axis=2).argmin(axis = 0)
 ###################################
 #%% Make a nice plot with all the given information
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/inhibit0.npy")
+occupancy = np.load("/home/arthur/dev/ros/data/maps/test11.npy")
 # plot_image(occupancy)
 
 robot_pos = np.array([150, 350, 1])
@@ -184,21 +186,20 @@ p2, p3 = corners[i_p2], corners[i_p3]
 
 # according to 'cv2.findcontours' we want to have zero = 
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/lore_1.npy")
+occupancy = np.load("/home/arthur/dev/ros/data/maps/test11.npy")
 
-threshold = 90
-binary = np.uint8(occupancy > threshold)
-plot_image(binary)
-binary = cv2.medianBlur(binary, ksize=5)
-plot_image(binary)
+#threshold = 90
+#binary = np.uint8(occupancy > threshold)
+#binary = cv2.medianBlur(binary, ksize=5)
+
+binary_dilated, binary = map_utils.filter_map(occupancy)
 
 # contour detection (WORKING but weak)
 
 cntrs, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-rgb_img = cv2.cvtColor(binary*255, cv2.COLOR_GRAY2RGB)
+rgb_img = cv2.cvtColor(binary_dilated*255, cv2.COLOR_GRAY2RGB)
 contours = [c for c in cntrs if len(c) > 30]
 cv2.drawContours(rgb_img, contours, -1, (0,255,0), 3)
-plot_image(rgb_img)
 
 # Find oriented rectangle (Working ! )
 
@@ -210,17 +211,6 @@ box = cv2.boxPoints(rot_rect) # cv2.boxPoints(rect) for OpenCV 3.x
 box = np.int0(box)
 cv2.drawContours(rgb_img,[box],0,(0,0,255),2)
 plot_image(rgb_img)
-
-
-
-
-
-
-
-
-
-
-
 
 
 

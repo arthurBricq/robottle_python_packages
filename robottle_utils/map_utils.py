@@ -41,7 +41,7 @@ def filter_map(occupancy, threshold = 90, median_kernel_size = 5, dilation_kerne
     binary = cv2.medianBlur(binary, ksize = median_kernel_size)
     kernel = np.ones((dilation_kernel_size, dilation_kernel_size), np.uint8)
     binary_dilated = cv2.erode(binary, kernel)
-    return binary_dilated
+    return binary_dilated, binary
 
 def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
     """Returns an oriented rectangle (x,y,w,h) which surrounds the map.
