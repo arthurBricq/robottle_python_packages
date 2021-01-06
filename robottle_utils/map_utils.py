@@ -147,7 +147,7 @@ def get_targets_from_zones(zones):
     """
     targets = []
     # Targets = recycling, grass, in front of recycling, in front of ramp, rocks entry point
-    weigths1 = [0.20, 0.25, 0.30,  0.6, 0.50]
+    weigths1 = [0.20, 0.25, 0.30,  0.6, 0.60]
     weigths2 = [0.20, 0.85, 0.30, 0.2, 0.80]
     for w1, w2 in zip(weigths1, weigths2): 
         p1 = average_points(zones[0], zones[2], w1)
