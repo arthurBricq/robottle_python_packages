@@ -117,16 +117,10 @@ def get_zones_from_previous(corners, previous_zones):
     idcs = (X * X).sum(axis=2).argmin(axis = 0)
     return new_zones[idcs]
 
-# for each zone, here is its 2 closest neighbours
-neighbours = np.array([[False,  True,  True, False],
-       [ True, False, False,  True],
-       [ True, False, False,  True],
-       [False,  True,  True, False]])
-
 # lambda to compute weighted average between 2 points
-average_points = lambda p1, p2, w: w * p1 + (1-w) * p2
+average_points = lambda p1, p2, w: w * p2 + (1-w) * p1
 
-def get_targets_from_zones(zones, target_weight = 0.8): 
+def get_targets_from_zones(zones): 
     """Given the computed zones, return target points where robot should go.
     Indeed, the 'zones' are the corner of the area and the robot can't go there.
     This function will select points that are within the real zone, and accessible for the robot. 
@@ -143,12 +137,12 @@ def get_targets_from_zones(zones, target_weight = 0.8):
     targets (r, z2, z3, z4): target points as defined above
     """
     targets = []
-    for i, neighbour in enumerate(neighbours):
-        zone = zones[i]
-        points = zones[neighbour]
-        p1 = average_points(zone, points[0], target_weight)
-        p2 = average_points(zone, points[1], target_weight)
-        target = average_points(p1, p2, 0.5)
+    weigths1 = [0.20, 0.20, 0.75, 0.80]
+    weigths2 = [0.20, 0.7, 0.25, 0.80]
+    for w1, w2 in zip(weigths1, weigths2): 
+        p1 = average_points(zones[0], zones[2], w1)
+        p2 = average_points(zones[1], zones[3], w1)
+        target = average_points(p1, p2, w2)
         targets.append(target)
     return np.array(targets).astype(int)
 

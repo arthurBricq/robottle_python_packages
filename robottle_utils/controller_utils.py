@@ -51,7 +51,7 @@ def lineseg_dists(p, a, b):
 
     return np.hypot(h, c)
 
-def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 12.5, dx_pixels = 10):
+def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 215, ymax_pix = 130, threshold_pixels = 12.5, dx_pixels = 10):
     """Given the position of the robot and the zones, 
     it will do the following steps
     - find the points delimiting the rocks zone
@@ -68,6 +68,44 @@ def is_obstacle_a_rock(robot_pos, zones, threshold_pixels = 12.5, dx_pixels = 10
     if zones is None or not len(zones):
         return False, None
 
+    print("Rock detection now")
+    print("INPUTS")
+    print(robot_pos)
+    print(zones)
+
+    v01 = zones[1] - zones[0]
+    v02 = zones[2] - zones[0]
+    r = robot_pos[:2] - zones[0]
+    print("Check of vector length: ", np.linalg.norm(v01), np.linalg.norm(v02))
+
+    # orthonogal projections 
+    x_pix = np.dot(r, v02 / np.linalg.norm(v02))
+    y_pix = np.dot(r, v01 / np.linalg.norm(v01))
+    print("Orthogonal projections: ", x_pix, y_pix)
+
+    # compute distances 
+    dx = xmax_pix - x_pix
+    dy = ymax_pix - y_pix
+    print("Distances to rocks line: ", dx, dy)
+
+    # logical decision
+    if dx > 0 and dy < 0: 
+        print("Zone A")
+    elif dx > 0 and dy > 0:
+        print("Zone B")
+    elif dx < 0 and dy >0:
+        print("Zone C")
+    elif dy < 0 and dy < 0:
+        print("Zone D")
+        
+
+    return None, None
+
+
+
+
+
+###############################
     # compute the points delimiting the rocks zone
     w = 0.25
     zones = np.array(zones)
