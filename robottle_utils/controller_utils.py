@@ -6,13 +6,6 @@ def get_distance(p1, p2):
     """Return euclidean distance between 2 points"""
     return np.linalg.norm(p1-p2)
 
-def get_path_orientation(path):
-    """Returns the orientation of the beginging of path.
-    Since we know that the path always starts at the robot, 
-    we look at the 2 first points to determine the orientation."""
-    direction = path[-2] - path[-1]
-    return np.rad2deg(np.arctan2(direction[1], direction[0]))
-
 def get_rotation_time(angle_to_reach):
     """Given an angle to rotate, estimate the required rotation time in seconds
     to reach this angle.
@@ -51,7 +44,7 @@ def lineseg_dists(p, a, b):
 
     return np.hypot(h, c)
 
-def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 215, ymax_pix = 130, threshold_pixels = 12.5, dx_pixels = 10):
+def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 226, ymax_pix = 118, d_threshold = 15, dx_pixels = 12):
     """Given the position of the robot and the zones, 
     it will do the following steps
     - find the points delimiting the rocks zone
@@ -68,77 +61,59 @@ def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 215, ymax_pix = 130, thresho
     if zones is None or not len(zones):
         return False, None
 
-    print("Rock detection now")
-    print("INPUTS")
-    print(robot_pos)
-    print(zones)
-
-    v01 = zones[1] - zones[0]
-    v02 = zones[2] - zones[0]
-    r = robot_pos[:2] - zones[0]
-    print("Check of vector length: ", np.linalg.norm(v01), np.linalg.norm(v02))
-
-    # orthonogal projections 
-    x_pix = np.dot(r, v02 / np.linalg.norm(v02))
-    y_pix = np.dot(r, v01 / np.linalg.norm(v01))
-    print("Orthogonal projections: ", x_pix, y_pix)
-
-    # compute distances 
-    dx = xmax_pix - x_pix
-    dy = ymax_pix - y_pix
-    print("Distances to rocks line: ", dx, dy)
-
-    # logical decision
-    if dx > 0 and dy < 0: 
-        print("Zone A")
-    elif dx > 0 and dy > 0:
-        print("Zone B")
-    elif dx < 0 and dy >0:
-        print("Zone C")
-    elif dy < 0 and dy < 0:
-        print("Zone D")
-        
-
-    return None, None
-
-
-
-
-
-###############################
-    # compute the points delimiting the rocks zone
-    w = 0.25
-    zones = np.array(zones)
-    p1 = w * zones[0] + (1 - w) * zones[2]
-    p2 = w * zones[1] + (1 - w) * zones[2]
-    p3 = w * zones[3] + (1 - w) * zones[2]
+    print("### Rock detection now")
 
     # get the position of the obstacle (b for bottle)
     theta = robot_pos[2] / 57.3
     b = np.array([robot_pos[0] + dx_pixels * np.cos(theta),
             robot_pos[1] + dx_pixels * np.sin(theta)])
 
-    # compute distances to rock lines
-    points1 = np.array([p1, p2])
-    points2 = np.array([p2, p3])
-    distances = lineseg_dists(b, points1, points2)
-    distance_to_rocks_1, distance_to_rocks_2 = distances[0], distances[1]
-    print(distance_to_rocks_1, distance_to_rocks_2, min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels)
+    v01 = zones[1] - zones[0]
+    v02 = zones[2] - zones[0]
+    r = b - zones[0]
 
-    # logic over distances
-    if min(distance_to_rocks_1, distance_to_rocks_2) < threshold_pixels:
-        # compute the angle the robot needs to rotate
-        if distance_to_rocks_1 < distance_to_rocks_2:
-            # robot must go toward direction 90 degrees
-            pass
-        else: 
-            # robot must go toward direction 
-            pass
+    # orthonogal projections 
+    x_pix = np.dot(r, v02 / np.linalg.norm(v02))
+    y_pix = np.dot(r, v01 / np.linalg.norm(v01))
 
-        angle = 30
-        return True, angle
-    return False, None
+    # compute distances 
+    dx = xmax_pix - x_pix
+    dy = y_pix - ymax_pix
+    print("Distances to rocks line: ", dx, dy)
 
+    # logical decision
+    is_obstacle_a_rock = False
+    angle = None
+    if dx > 0 and dy < 0: 
+        print("Zone A")
+        if dx < d_threshold:
+            is_obstacle_a_rock = True
+            line_orientation = get_path_orientation([zones[3], zones[2]])
+            angle = angle_diff(line_orientation, theta)
+
+    elif dx > 0 and dy > 0:
+        print("Zone B")
+
+    elif dx < 0 and dy > 0:
+        print("Zone C")
+        if dy < d_threshold:
+            is_obstacle_a_rock = True
+            line_orientation = get_path_orientation([zones[2], zones[0]])
+            angle = angle_diff(line_orientation, theta)
+
+    elif dx < 0 and dy < 0:
+        print("Zone D")
+        if (-dx < d_threshold):
+            is_obstacle_a_rock = True
+            line_orientation = get_path_orientation([zones[2], zones[3]])
+            angle = angle_diff(line_orientation, theta)
+        elif (-dy < d_threshold):
+            is_obstacle_a_rock = True
+            line_orientation = get_path_orientation([zones[0], zones[2]])
+            angle = angle_diff(line_orientation, theta)
+        
+    print("Results: ", is_obstacle_a_rock, angle)
+    return is_obstacle_a_rock, angle
 
 def angle_diff(theta1, theta2): 
     """
@@ -147,6 +122,12 @@ def angle_diff(theta1, theta2):
     diff = (theta1 - theta2 + 180) % 360 - 180
     return diff
 
+def get_path_orientation(path):
+    """Returns the orientation of the beginging of path.
+    Since we know that the path always starts at the robot, 
+    we look at the 2 first points to determine the orientation."""
+    direction = path[-2] - path[-1]
+    return np.rad2deg(np.arctan2(direction[1], direction[0]))
 
 
 
