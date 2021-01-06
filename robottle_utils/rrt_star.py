@@ -78,8 +78,7 @@ class RRTStar(RRT):
             # find nearest vertex
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd)
             # steer to get new point
-            new_node = self.steer(self.node_list[nearest_ind], rnd,
-                                  self.expand_dis)
+            new_node = self.steer(self.node_list[nearest_ind], rnd, self.expand_dis)
             near_node = self.node_list[nearest_ind]
             new_node.cost = near_node.cost + \
                 math.hypot(new_node.x-near_node.x,
@@ -89,8 +88,7 @@ class RRTStar(RRT):
                 # = if you can go to this new node without hitting obstacle
                 near_inds = self.find_near_nodes(new_node)
                 # find if there is another node which would be a better parent
-                node_with_updated_parent = self.choose_parent(
-                    new_node, near_inds)
+                node_with_updated_parent = self.choose_parent(new_node, near_inds)
                 if node_with_updated_parent:
                     self.rewire(node_with_updated_parent, near_inds)
                     self.node_list.append(node_with_updated_parent)
@@ -100,9 +98,9 @@ class RRTStar(RRT):
             if animation:
                 self.draw_graph(rnd)
 
-            if ((not self.search_until_max_iter)
-                    and new_node):  # if reaches goal
+            if ((not self.search_until_max_iter) and new_node):  # if reaches goal
                 last_index = self.search_best_goal_node()
+                print("Index found: ", last_index)
                 if last_index is not None:
                     return self.generate_final_course(last_index)
 
@@ -154,6 +152,11 @@ class RRTStar(RRT):
         return new_node
 
     def search_best_goal_node(self):
+        """
+        This function is called everytime a valid node was added
+        """
+
+        # 1. find indices of all nodes that are in a circle around the goal 
         dist_to_goal_list = [
             self.calc_dist_to_goal(n.x, n.y) for n in self.node_list
         ]
@@ -161,22 +164,78 @@ class RRTStar(RRT):
             dist_to_goal_list.index(i) for i in dist_to_goal_list
             if i <= self.expand_dis
         ]
+        # 2. find the ones without collision
+        safe_goal_inds = []
+        for goal_ind in goal_inds:
+            # this node is the goal
+            t_node = self.steer(self.node_list[goal_ind], self.goal_node)
+            # for each possible approach
+            if self.check_collision(t_node, self.binary_obstacle):
 
+                # = if you can go to this new node without hitting obstacle
+                near_inds = self.find_near_nodes(t_node)
+                # find if there is another node which would be a better parent
+                node_with_updated_parent = self.choose_parent(t_node, near_inds)
+                if node_with_updated_parent:
+                    self.rewire(node_with_updated_parent, near_inds)
+                    self.node_list.append(node_with_updated_parent)
+                    safe_goal_inds.append(len(self.node_list)-1)
+                else:
+                    # self.node_list.append(new_node)
+                    safe_goal_inds.append(goal_ind)
+
+
+
+
+        if not safe_goal_inds:
+            return None
+            
+        # find the minimum indixes
+        # return np.argmin([self.node_list[i].cost for i in safe_goal_inds])
+        min_cost = min([self.node_list[i].cost for i in safe_goal_inds])
+        for i in safe_goal_inds:
+            if self.node_list[i].cost == min_cost:
+                return i
+        return None
+
+    def search_best_goal_node_old(self):
+        """
+        This function is called everytime a valid node was added
+        """
+
+        # 1. find indices of all nodes that are in a circle around the goal 
+        dist_to_goal_list = [
+            self.calc_dist_to_goal(n.x, n.y) for n in self.node_list
+        ]
+        goal_inds = [
+            dist_to_goal_list.index(i) for i in dist_to_goal_list
+            if i <= self.expand_dis
+        ]
+        # 2. find the ones without collision
         safe_goal_inds = []
         for goal_ind in goal_inds:
             t_node = self.steer(self.node_list[goal_ind], self.goal_node)
             if self.check_collision(t_node, self.binary_obstacle):
                 safe_goal_inds.append(goal_ind)
 
+        goal_rate = self.goal_sample_rate
         if not safe_goal_inds:
             return None
+        else: 
+            self.goal_sample_rate = 100
+            print("The goal rate is", goal_rate)
+            
+        if goal_rate == 100: 
+            # find the minimum indixes
+            # return np.argmin([self.node_list[i].cost for i in safe_goal_inds])
+            min_cost = min([self.node_list[i].cost for i in safe_goal_inds])
+            for i in safe_goal_inds:
+                if self.node_list[i].cost == min_cost:
+                    return i
+        else:
+            return None
 
-        min_cost = min([self.node_list[i].cost for i in safe_goal_inds])
-        for i in safe_goal_inds:
-            if self.node_list[i].cost == min_cost:
-                return i
 
-        return None
 
     def find_near_nodes(self, new_node):
         """
