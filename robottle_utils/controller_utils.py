@@ -61,10 +61,9 @@ def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 226, ymax_pix = 118, d_thres
     if zones is None or not len(zones):
         return False, None
 
-    print("### Rock detection now")
 
     # get the position of the obstacle (b for bottle)
-    theta = robot_pos[2] / 57.3
+    theta = robot_pos[2] 
     b = np.array([robot_pos[0] + dx_pixels * np.cos(theta),
             robot_pos[1] + dx_pixels * np.sin(theta)])
 
@@ -79,30 +78,30 @@ def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 226, ymax_pix = 118, d_thres
     # compute distances 
     dx = xmax_pix - x_pix
     dy = y_pix - ymax_pix
-    print("Distances to rocks line: ", dx, dy)
 
     # logical decision
     is_obstacle_a_rock = False
     angle = None
+    zone = "_"
     if dx > 0 and dy < 0: 
-        print("Zone A")
+        zone = "A"
         if dx < d_threshold:
             is_obstacle_a_rock = True
             line_orientation = get_path_orientation([zones[3], zones[2]])
             angle = angle_diff(line_orientation, theta)
 
     elif dx > 0 and dy > 0:
-        print("Zone B")
+        zone = "B"
 
     elif dx < 0 and dy > 0:
-        print("Zone C")
+        zone = "C"
         if dy < d_threshold:
             is_obstacle_a_rock = True
             line_orientation = get_path_orientation([zones[2], zones[0]])
             angle = angle_diff(line_orientation, theta)
 
     elif dx < 0 and dy < 0:
-        print("Zone D")
+        zone = "D"
         if (-dx < d_threshold):
             is_obstacle_a_rock = True
             line_orientation = get_path_orientation([zones[2], zones[3]])
@@ -112,7 +111,12 @@ def is_obstacle_a_rock(robot_pos, zones, xmax_pix = 226, ymax_pix = 118, d_thres
             line_orientation = get_path_orientation([zones[0], zones[2]])
             angle = angle_diff(line_orientation, theta)
         
-    print("Results: ", is_obstacle_a_rock, angle)
+    if is_obstacle_a_rock:
+        print("### Rock detection now")
+        print(zone)
+        print("Distances to rocks line: ", dx, dy)
+        print("Results: ", is_obstacle_a_rock, angle)
+        print("Angles", theta, line_orientation)
     return is_obstacle_a_rock, angle
 
 def angle_diff(theta1, theta2): 

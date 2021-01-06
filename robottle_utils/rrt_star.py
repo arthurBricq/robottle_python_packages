@@ -54,8 +54,15 @@ class RRTStar(RRT):
                          path_resolution, goal_sample_rate, max_iter)
 
         self.connect_circle_dist = connect_circle_dist
-        self.goal_node = self.Node(goal[0], goal[1])
         self.search_until_max_iter = search_until_max_iter
+
+        self.goal_node = self.Node(goal[0], goal[1])
+        while not binary_obstacle[int(self.goal_node.y), int(self.goal_node.x)]: 
+            print("[RRTSTAR]: Target was obstacle !")
+            print(self.goal_node.x, self.goal_node.y)
+            print(binary_obstacle[int(self.goal_node.y), int(self.goal_node.x)])
+            self.goal_node = self.Node(0.95*self.goal_node.x + 0.05*start[0], 0.95*self.goal_node.y + 0.05*start[1])
+
 
     def planning(self, animation=True):
         """
