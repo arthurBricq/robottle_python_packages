@@ -6,7 +6,6 @@ import cv2
 
 ### HELPER FUNCTIONS
 
-
 def pos_to_gridpos(x, y, N_pixs = 500, L = 10):
     """Retuns the given position in meters to a grid position as a numpy array. 
     N_pixs is the number of pixels per side, and L is the actual lenght of 1 side.
@@ -76,7 +75,7 @@ def get_bounding_rect(binary_grid, N_points_min = 30, save_name = None):
 
 ### 'ZONES FUNCTION'
 
-def get_initial_zones(corners, robot_position):
+def get_initial_zones(corners, robot_position, closest_zone = 0):
     """Returns the outermost position of the zones (recyling, zone2, zone3, zone4)
     given the initial corners of the map and the initial robot position. 
 
@@ -85,23 +84,31 @@ def get_initial_zones(corners, robot_position):
     - the further away is the zone 4 (the ramp) 
     - the zones 2 and 3 are at the right and at the left of the map
 
-    Returns
+    DISCLAMER
+    ---------
+    parameter closest_zone must be either 0 or 2 (recycling or rocks)
+
+    RETURNS
+    --------
     zones (recycling, z2, z3, z4)
     """
     # 1. find points closest and the further away from robot
     # this gives recycling area and the ramp zone
     # i stands for 'index'
     distances = ((corners - robot_position) * (corners - robot_position)).sum(axis = 1)
-    i_r, i_p4 = distances.argmin(), distances.argmax()
-    r, p4  = corners[i_r], corners[i_p4]
+    i_closesth, i_furthest = distances.argmin(), distances.argmax()
+    closest, furthest = corners[i_closesth], corners[i_furthest]
 
     # 2. use sign of the cross product to find which are zone 2 and zone 3
-    diag = p4 - r
-    cross_products = np.cross(diag, corners - r)
-    i_p3, i_p2 = cross_products.argmin(), cross_products.argmax()
-    p2, p3 = corners[i_p2], corners[i_p3]
+    diag = furthest - closest
+    cross_products = np.cross(diag, corners - closest)
+    i_left, i_right = cross_products.argmin(), cross_products.argmax()
+    right, left = corners[i_right], corners[i_left]
 
-    return (r, p2, p3, p4)
+    if closest_zone == 0:
+        return (closest, right, left, furthest)
+    elif closest_zone ==2: 
+        return (right, furthest, closest, left)
 
 def get_zones_from_previous(corners, previous_zones):
     """Given the 4 corners found and the previous zones detected (assuming that those
