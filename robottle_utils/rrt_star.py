@@ -100,7 +100,6 @@ class RRTStar(RRT):
 
             if ((not self.search_until_max_iter) and new_node):  # if reaches goal
                 last_index = self.search_best_goal_node()
-                print("Index found: ", last_index)
                 if last_index is not None:
                     return self.generate_final_course(last_index)
 

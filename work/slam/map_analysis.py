@@ -186,7 +186,7 @@ p2, p3 = corners[i_p2], corners[i_p3]
 
 # according to 'cv2.findcontours' we want to have zero = 
 
-occupancy = np.load("/home/arthur/dev/ros/data/maps/test11.npy")
+occupancy = np.load("/home/arthur/dev/ros/data/maps/test30m.npy")
 
 #threshold = 90
 #binary = np.uint8(occupancy > threshold)
