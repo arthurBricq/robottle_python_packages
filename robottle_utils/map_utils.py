@@ -146,8 +146,9 @@ def get_targets_from_zones(zones):
     targets (r, z2, z3, z4): target points as defined above
     """
     targets = []
-    weigths1 = [0.20, 0.20, 0.75, 0.80]
-    weigths2 = [0.20, 0.7, 0.25, 0.80]
+    # Targets = recycling, grass, in front of recycling, in front of ramp, rocks entry point
+    weigths1 = [0.20, 0.20, 0.30,  0.6, 0.50]
+    weigths2 = [0.20, 0.7, 0.30, 0.2, 0.80]
     for w1, w2 in zip(weigths1, weigths2): 
         p1 = average_points(zones[0], zones[2], w1)
         p2 = average_points(zones[1], zones[3], w1)
@@ -196,7 +197,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         for i, z in enumerate(zones):
             cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
     if len(targets):
-        colors = [(0, 128, 255), (0, 204, 0), (128, 128, 128), (153, 0, 0), ]
+        colors = [(0, 128, 255), (0, 204, 0), (153, 0, 0), (128, 128, 128), (200, 10, 100)]
         for i, z in enumerate(targets):
             cv2.circle(rgb_img, tuple(z), 5, colors[i], cv2.FILLED)
     if len(path):
