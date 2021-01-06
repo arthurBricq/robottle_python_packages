@@ -117,6 +117,15 @@ def get_zones_from_previous(corners, previous_zones):
     idcs = (X * X).sum(axis=2).argmin(axis = 0)
     return new_zones[idcs]
 
+def are_new_zones_valid(new_zones, last_zones, threshold = 60):
+    """Returns True if new zones are valid"""
+    X = new_zones - last_zones
+    dists = np.linalg.norm(X, axis = -1)
+    if dists.max() > threshold: 
+        return False
+    else: 
+        return True
+
 # lambda to compute weighted average between 2 points
 average_points = lambda p1, p2, w: w * p2 + (1-w) * p1
 
