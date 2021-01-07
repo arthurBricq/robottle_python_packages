@@ -22,7 +22,7 @@ def getAngle(P,x,y):
 
 is_fake = True
 
-f = open('detections_faked2.txt' if is_fake else 'detections_real.txt')
+f = open('detections_faked3.txt' if is_fake else 'detections_real.txt')
 det = []
 detections = []
 

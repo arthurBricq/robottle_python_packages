@@ -59,16 +59,16 @@ def save_picture(pixels, rows, cols, dim, name, folder):
     print(cv2.imwrite(file_name ,frame))
     return frame
 
-def get_angle_of_detection(detection, P = np.array([[-3.78854507e+01],
-       [ 7.62023848e-02],
-       [ 2.78413424e-02],
-       [-5.36492214e-05],
-       [-1.52570016e-05],
-       [-1.08542385e-04],
-       [ 2.93065871e-08],
-       [-2.26028849e-08],
-       [ 1.30883363e-07],
-       [ 1.64871663e-08]])):
+def get_angle_of_detection(detection, P = np.array([[-3.41793628e+01],
+       [ 7.18081916e-02],
+       [-1.40474330e-02],
+       [-4.51951707e-05],
+       [-5.81118447e-06],
+       [ 2.19569100e-05],
+       [ 2.17476005e-08],
+       [ 8.52839111e-09],
+       [ 4.80946129e-08],
+       [-5.69118159e-08]] )):
     """This function returns the angle to rotate in order to reach the next bottle
     towards the right of the robot.
     TODO It can also return None if no good candidates were found.
