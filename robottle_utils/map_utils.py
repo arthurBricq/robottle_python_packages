@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-
-
 ### HELPER FUNCTIONS
 
 def pos_to_gridpos(x, y, N_pixs = 500, L = 10):
@@ -204,7 +202,7 @@ def make_nice_plot(binary_grid, save_name, robot_pos = [], theta = 0, contours =
         for i, z in enumerate(zones):
             cv2.circle(rgb_img, tuple(z), 15, colors[i], cv2.FILLED)
     if len(targets):
-        colors = [(0, 128, 255), (0, 204, 0), (153, 0, 0), (128, 128, 128), (200, 10, 100)]
+        colors = [(0, 128, 255), (0, 204, 0), (153, 0, 0), (200, 10, 100), (128, 128, 128), (128, 128, 128)]
         for i, z in enumerate(targets):
             cv2.circle(rgb_img, tuple(z), 5, colors[i], cv2.FILLED)
     if len(path):
