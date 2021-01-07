@@ -107,7 +107,7 @@ def get_initial_zones(corners, robot_position, closest_zone = 0):
 
     if closest_zone == 0:
         return (closest, right, left, furthest)
-    elif closest_zone ==2: 
+    elif closest_zone == 2: 
         return (right, furthest, closest, left)
 
 def get_zones_from_previous(corners, previous_zones):
@@ -153,9 +153,9 @@ def get_targets_from_zones(zones):
     targets (r, z2, z3, z4): target points as defined above
     """
     targets = []
-    # Targets = recycling, grass, in front of recycling, in front of ramp, rocks entry point
-    weigths1 = [0.20, 0.25, 0.30,  0.6, 0.60]
-    weigths2 = [0.20, 0.85, 0.30, 0.2, 0.80]
+    # Targets = recycling, grass, in front of recycling, in front of ramp, rocks entry point, rocks exit point
+    weigths1 = [0.20, 0.25, 0.30,  0.6, 0.6, 0.8]
+    weigths2 = [0.20, 0.85, 0.30, 0.8, 0.2, 0.2]
     for w1, w2 in zip(weigths1, weigths2): 
         p1 = average_points(zones[0], zones[2], w1)
         p2 = average_points(zones[1], zones[3], w1)
