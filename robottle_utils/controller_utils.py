@@ -1,6 +1,6 @@
 import numpy as np
 
-ROTATION_SPEED = 18.3 # [deg / sec]
+ROTATION_SPEED = 33.2 # [deg / sec]
 
 def get_distance(p1, p2):
     """Return euclidean distance between 2 points"""
